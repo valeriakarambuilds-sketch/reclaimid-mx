@@ -15,3 +15,12 @@ export type RecoveryCase = {
   nextSteps: string[];
   limitations: string;
 };
+
+export function hasMeaningfulFinancialEvidence(evidence: ExtractedEvidence): boolean {
+  return [
+    evidence.institution,
+    evidence.referenceNumber,
+    evidence.amount,
+    evidence.incidentType,
+  ].some((value) => value.trim().length > 0);
+}

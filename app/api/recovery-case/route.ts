@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStructuredJson } from "@/lib/gemini";
-import { ExtractedEvidence, RecoveryCase } from "@/lib/types";
+import { ExtractedEvidence, hasMeaningfulFinancialEvidence, RecoveryCase } from "@/lib/types";
 import { validateDescription } from "@/lib/validation";
 
 const schema = {
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     const evidence = cleanEvidence(body?.evidence);
     if (descriptionError) return NextResponse.json({ error: descriptionError }, { status: 400 });
     if (!evidence) return NextResponse.json({ error: "Review the extracted evidence before continuing." }, { status: 400 });
+    if (!hasMeaningfulFinancialEvidence(evidence)) {
+      return NextResponse.json({ error: "No relevant financial evidence was detected. Upload another image and try again." }, { status: 400 });
+    }
 
     const prompt = `Create a concise, structured recovery case for a person in Mexico based only on the supplied description and reviewed fields. Do not claim fraud, identity theft, document authenticity, or account falsity as certain. Clearly distinguish user-reported details from image-extracted details. Use cautious phrases such as "appears to show" and "the evidence suggests". Recommended next steps may include contacting the institution through verified channels, preserving records, requesting a folio, checking credit reports, and considering official Mexican consumer/financial authorities when relevant. Do not invent dates, facts, contacts, deadlines, or legal conclusions. State limitations clearly. Return only the requested JSON.\n\nUser description:\n${body.description.trim()}\n\nReviewed evidence fields:\n${JSON.stringify(evidence)}`;
     const result = await generateStructuredJson<RecoveryCase>([{ text: prompt }], schema);
