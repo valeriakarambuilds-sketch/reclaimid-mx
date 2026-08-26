@@ -1,4 +1,5 @@
 export type ExtractedEvidence = {
+  imageContainsRelevantFinancialEvidence: boolean;
   institution: string;
   date: string;
   referenceNumber: string;
@@ -15,12 +16,3 @@ export type RecoveryCase = {
   nextSteps: string[];
   limitations: string;
 };
-
-export function hasRelevantEvidence(evidence: ExtractedEvidence): boolean {
-  return [
-    evidence.institution,
-    evidence.referenceNumber,
-    evidence.amount,
-    evidence.incidentType,
-  ].some((value) => typeof value === "string" && value.trim().length > 0);
-}

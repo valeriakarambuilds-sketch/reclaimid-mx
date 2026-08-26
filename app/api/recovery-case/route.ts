@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStructuredJson } from "@/lib/gemini";
-import { ExtractedEvidence, hasRelevantEvidence, RecoveryCase } from "@/lib/types";
+import { ExtractedEvidence, RecoveryCase } from "@/lib/types";
 import { validateDescription } from "@/lib/validation";
 
 const schema = {
@@ -19,8 +19,9 @@ const schema = {
 function cleanEvidence(value: unknown): ExtractedEvidence | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Record<string, unknown>;
-  const keys: Array<keyof ExtractedEvidence> = ["institution", "date", "referenceNumber", "amount", "incidentType", "notes"];
-  const output = {} as ExtractedEvidence;
+  if (typeof input.imageContainsRelevantFinancialEvidence !== "boolean") return null;
+  const keys: Array<Exclude<keyof ExtractedEvidence, "imageContainsRelevantFinancialEvidence">> = ["institution", "date", "referenceNumber", "amount", "incidentType", "notes"];
+  const output = { imageContainsRelevantFinancialEvidence: input.imageContainsRelevantFinancialEvidence } as ExtractedEvidence;
   for (const key of keys) {
     if (typeof input[key] !== "string" || input[key].length > 1000) return null;
     output[key] = input[key].trim();
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     const evidence = cleanEvidence(body?.evidence);
     if (descriptionError) return NextResponse.json({ error: descriptionError }, { status: 400 });
     if (!evidence) return NextResponse.json({ error: "Review the extracted evidence before continuing." }, { status: 400 });
-    if (!hasRelevantEvidence(evidence)) {
+    if (evidence.imageContainsRelevantFinancialEvidence !== true) {
       return NextResponse.json({ error: "No relevant financial evidence was detected. Upload another image and try again." }, { status: 400 });
     }
 
