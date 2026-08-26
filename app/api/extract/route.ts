@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStructuredJson } from "@/lib/gemini";
-import { ExtractedEvidence } from "@/lib/types";
+import { ExtractedEvidence, hasRelevantEvidence } from "@/lib/types";
 import { validateDescription, validateImage } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -30,7 +30,10 @@ export async function POST(request: Request) {
       { text: prompt },
       { inlineData: { mimeType: file.type, data: base64 } },
     ], schema);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      evidence: result,
+      hasRelevantEvidence: hasRelevantEvidence(result),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not analyze the evidence.";
     return NextResponse.json({ error: message }, { status: 500 });

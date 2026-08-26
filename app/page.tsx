@@ -4,7 +4,7 @@ import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { RecoveryCaseView } from "@/components/RecoveryCaseView";
 import { Spinner } from "@/components/Spinner";
-import { ExtractedEvidence, hasMeaningfulFinancialEvidence, RecoveryCase } from "@/lib/types";
+import { ExtractedEvidence, RecoveryCase } from "@/lib/types";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE } from "@/lib/validation";
 
 const emptyEvidence: ExtractedEvidence = { institution: "", date: "", referenceNumber: "", amount: "", incidentType: "", notes: "" };
@@ -21,11 +21,10 @@ export default function Home() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [evidence, setEvidence] = useState<ExtractedEvidence | null>(null);
-  const [evidenceDetected, setEvidenceDetected] = useState(false);
+  const [hasRelevantEvidence, setHasRelevantEvidence] = useState(false);
   const [recoveryCase, setRecoveryCase] = useState<RecoveryCase | null>(null);
   const [loading, setLoading] = useState<"analyze" | "case" | null>(null);
   const [error, setError] = useState("");
-  const hasRelevantEvidence = evidence !== null && evidenceDetected;
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
@@ -39,7 +38,7 @@ export default function Home() {
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
     setEvidence(null);
-    setEvidenceDetected(false);
+    setHasRelevantEvidence(false);
   }
 
   async function analyze(event: FormEvent) {
@@ -55,8 +54,8 @@ export default function Home() {
       const response = await fetch("/api/extract", { method: "POST", body: form });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not analyze the evidence.");
-      setEvidence(data);
-      setEvidenceDetected(hasMeaningfulFinancialEvidence(data));
+      setEvidence(data.evidence);
+      setHasRelevantEvidence(data.hasRelevantEvidence === true);
     } catch (err) { setError(err instanceof Error ? err.message : "Could not analyze the evidence."); }
     finally { setLoading(null); }
   }
@@ -76,7 +75,7 @@ export default function Home() {
 
   function startOver() {
     if (preview) URL.revokeObjectURL(preview);
-    setDescription(""); setImageFile(null); setPreview(""); setEvidence(null); setEvidenceDetected(false); setRecoveryCase(null); setError("");
+    setDescription(""); setImageFile(null); setPreview(""); setEvidence(null); setHasRelevantEvidence(false); setRecoveryCase(null); setError("");
   }
 
   if (recoveryCase) return <RecoveryCaseView recoveryCase={recoveryCase} onStartOver={startOver} />;

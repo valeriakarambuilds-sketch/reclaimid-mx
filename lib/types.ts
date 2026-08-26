@@ -16,11 +16,11 @@ export type RecoveryCase = {
   limitations: string;
 };
 
-export function hasMeaningfulFinancialEvidence(evidence: ExtractedEvidence): boolean {
+export function hasRelevantEvidence(evidence: ExtractedEvidence): boolean {
   return [
     evidence.institution,
     evidence.referenceNumber,
     evidence.amount,
     evidence.incidentType,
-  ].some((value) => value.trim().length > 0);
+  ].some((value) => typeof value === "string" && value.trim().length > 0);
 }

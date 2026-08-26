@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateStructuredJson } from "@/lib/gemini";
-import { ExtractedEvidence, hasMeaningfulFinancialEvidence, RecoveryCase } from "@/lib/types";
+import { ExtractedEvidence, hasRelevantEvidence, RecoveryCase } from "@/lib/types";
 import { validateDescription } from "@/lib/validation";
 
 const schema = {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const evidence = cleanEvidence(body?.evidence);
     if (descriptionError) return NextResponse.json({ error: descriptionError }, { status: 400 });
     if (!evidence) return NextResponse.json({ error: "Review the extracted evidence before continuing." }, { status: 400 });
-    if (!hasMeaningfulFinancialEvidence(evidence)) {
+    if (!hasRelevantEvidence(evidence)) {
       return NextResponse.json({ error: "No relevant financial evidence was detected. Upload another image and try again." }, { status: 400 });
     }
 
